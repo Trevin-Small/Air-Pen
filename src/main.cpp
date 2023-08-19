@@ -1,6 +1,9 @@
 #include "esp_camera.h"
 #include "camera_pins.h"
+#include "image_processing.h"
 #include <Arduino.h>
+
+blob_arr_t blobs = { 0 };
 
 static camera_config_t config = {
   .pin_pwdn = PWDN_GPIO_NUM,
@@ -32,7 +35,7 @@ static camera_config_t config = {
   .fb_count = 1,
   .fb_location = CAMERA_FB_IN_PSRAM,
   //.pixel_format = PIXFORMAT_RGB565, // for face detection/recognition
-  .grab_mode = CAMERA_GRAB_WHEN_EMPTY,
+  .grab_mode = CAMERA_GRAB_LATEST,
 };
 
 // camera init
@@ -50,50 +53,45 @@ esp_err_t camera_init() {
 void setup() {
   Serial.begin(115200);
 
-  Serial.println("Hello world.");
-
   esp_err_t err = camera_init();
-}
 
-void loop() {
+  delay(3000);
 
-  //acquire a frame
-  camera_fb_t * frame = esp_camera_fb_get();
-  if (!frame) {
+  Serial.println("hi");
+
+  for (int i = 0; i < BLOB_ARR_SIZE; i++) {
+    blobs.blobs[i] = blob_t { 0 };
+  }
+
+    camera_fb_t * fb = esp_camera_fb_get();
+  if (!fb) {
       Serial.println("Camera Capture Failed");
       delay(1000);
   }
 
-  // process frame buffer (image)
+  find_blobs(fb, &blobs);
+  Serial.println("\n\n");
 
-  Serial.print("Frame: ");
-  Serial.print(frame->width);
-  Serial.print(", ");
-  Serial.print(frame->height);
-  Serial.print(" | ");
-  Serial.println(frame->len);
+  //return the fb buffer back to the driver for reuse
+  esp_camera_fb_return(fb);
 
-  long long average = 0;
+  delay(5000);
+}
 
-  for (int i = 0; i < frame->height; i++) {
+void loop() {
 
-      uint8_t val = frame->buf[i * frame->width];
-
-      //average += (*val) + *(val + 1) + *(val + 2);
-
-      Serial.print("[");
-      Serial.print(val);
-      //Serial.print(*(val + 1));
-      //Serial.print(*(val + 2));
-      Serial.println("]");
-
+  //acquire a fb
+  camera_fb_t * fb = esp_camera_fb_get();
+  if (!fb) {
+      Serial.println("Camera Capture Failed");
+      delay(1000);
   }
 
-  Serial.print("Average: ");
-  Serial.print(average / (96 * 3));
+  find_blobs(fb, &blobs);
+  Serial.println("\n\n");
 
-  //return the frame buffer back to the driver for reuse
-  esp_camera_fb_return(frame);
+  //return the fb buffer back to the driver for reuse
+  esp_camera_fb_return(fb);
 
-  delay(10000);
+  delay(50);
 }

@@ -1,6 +1,10 @@
 #pragma once
+#include "esp_camera.h"
 #include <stdint.h>
+#include <vector>
+#include <stack>
 
+#define MAX_NUM_BLOBS     8
 #define BLOB_THRESHOLD  100
 #define BLOB_ARR_SIZE     4
 #define BLOB_BUF_SIZE     8
@@ -10,7 +14,12 @@
  * A blob is defined as a group of bright pixels within a greyscale image.
  */
 typedef struct blob {
-  size_t size;             // Number of pixels in the blob
+  uint32_t size;           // Number of pixels in the blob
+  uint32_t pos;            // Position of the blob in the buffer
+  uint8_t min_x;           // Minimum x coordinate of the blob
+  uint8_t max_x;           // Maximum x coordinate of the blob
+  uint8_t min_y;           // Minimum y coordinate of the blob
+  uint8_t max_y;           // Maximum y coordinate of the blob
   uint8_t x;               // Center x of the blob
   uint8_t y;               // Center y of the blob
   uint8_t avg_brightness;  // Average pixel brightness of the blob
@@ -39,6 +48,7 @@ typedef struct blob_buf {
 } blob_buf_t;
 
 void binarize_image(camera_fb_t *fb, uint8_t *bin_fb);
-void find_blobs(camera_fb_t *fb, uint8_t *bin_fb, blob_arr_t *blob_arr);
-void add_blobs(blob_buf_t *blob_buf, blob_arr_t * blob_arr);
-int get_latest_blobs(blob_buf_t *blob_buf, blob_arr_t * blob_arr);
+long long floodfill(camera_fb_t *fb, uint8_t *flood_buf, uint32_t pos, uint8_t flood_num, blob_t *blob);
+void find_blobs(camera_fb_t *fb, blob_arr_t *blob_arr);
+void add_blobs(blob_buf_t *blob_buf, blob_arr_t *blob_arr);
+void get_latest_blobs(blob_buf_t *blob_buf, blob_arr_t *blob_arr);
