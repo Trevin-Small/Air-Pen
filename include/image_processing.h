@@ -2,14 +2,17 @@
 #define IMG_PROCESSING_H
 
 #include "esp_camera.h"
+#include "circular_buffer.h"
 #include <stdint.h>
 #include <vector>
 #include <stack>
 
-#define MAX_NUM_BLOBS     8
-#define BLOB_THRESHOLD  100
-#define BLOB_ARR_SIZE     4
-#define BLOB_BUF_SIZE     8
+#define MAX_BLOBS_PER_FRAME   8   // Maximum number of blobs to find in an image.
+#define BLOB_THRESHOLD      100   // Threshold to categorize a pixel as white/black
+#define BLOB_BUF_SIZE         8   // Number of blob arrays to keep in the buffer
+
+#define PEN_BLOB_MIN_SIZE     2   // Min size the reference IR blob wil show up as
+#define PEN_BLOB_MAX_SIZE    10   // Max size the reference IR blob wil show up as
 
 
 /*
@@ -27,24 +30,19 @@ typedef struct blob {
   uint8_t avg_brightness;  // Average pixel brightness of the blob
 } blob_t;
 
+
 /*
- * Circular buffer of blob arrays allows processing of multiple samples of blob
- * positions to find blobs which are near one another and similar in size and
- * brightness.
+ * Circular buffer of vectors of blobs. Looking through blobs in the buffer allows
+ * for picking out blobs that are close to one another, moving in the same trend,
+ * and/or flashing at certain frequencies.
  *
- * This enables picking the blob that corresponds to the position of the Air Pen
- * infrared light reference source, even with infrared noise in the environment.
+ * Helpful for finding specific light sources.
  */
-typedef struct blob_buf {
-  std::vector<blob_t> buf[BLOB_BUF_SIZE];
-  uint8_t read_pos;
-  uint8_t write_pos;
-} blob_buf_t;
+circular_buffer<std::vector<blob_t>> blob_buf;
+
 
 void binarize_image(camera_fb_t *fb, uint8_t *bin_fb);
 long long floodfill(camera_fb_t *fb, std::vector<uint8_t> &flood_buf, uint32_t pos, uint8_t flood_num, blob_t &blob);
 void find_blobs(camera_fb_t *fb, std::vector<blob_t> &blob_arr);
-void add_blobs(blob_buf_t &blob_buf, std::vector<blob_t> &blob_arr);
-void get_latest_blobs(blob_buf_t &blob_buf, std::vector<blob_t> &blob_arr);
 
 #endif

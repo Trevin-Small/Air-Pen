@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <vector>
 #include <stack>
+#include <algorithm>
 
 /*
  * Given the greyscale image in fb->buf, binarize the image and
@@ -62,7 +63,7 @@ void find_blobs(camera_fb_t *fb, std::vector<blob_t> &blob_arr) {
   const uint8_t * buf = fb->buf;
   const size_t len = fb->len;
   uint8_t blob_num = 0;
-  std::vector<blob_t> blob_list(255, blob_t { 0 });
+  std::vector<blob_t> blob_list(MAX_BLOBS_PER_FRAME, blob_t { 0 });
   std::vector<uint8_t> flood_buf(len, 0);
 
   for (uint32_t i = 0; i < len; i++) {
@@ -87,18 +88,31 @@ void find_blobs(camera_fb_t *fb, std::vector<blob_t> &blob_arr) {
       blob.y = (blob.max_y - blob.min_y) / 2;
       blob.avg_brightness = total_brightness / blob.size;
 
-      blob_list[blob_num++] = blob;
-
-      if (blob_num == MAX_NUM_BLOBS) {
-        break;
-      }
+      blob_list.push_back(blob);
 
     }
 
   }
 
-  //sort(blob_list);
-  //blob_arr = blob_list[0:7];
+  struct {
+    bool operator()(blob_t a, blob_t b) { return a.avg_brightness > b.avg_brightness; }
+  } blob_cmp;
+
+  std::sort(blob_list.begin(), blob_list.end());
+
+  for (int i = 0; i < MAX_BLOBS_PER_FRAME; i++) {
+
+    Serial.print("Blob ");
+    Serial.print(i);
+    Serial.print(": ");
+    Serial.print(blob_list[i].x);
+    Serial.print(", ");
+    Serial.print(blob_list[i].y);
+    Serial.print(", ");
+    Serial.print(blob_list[i].avg_brightness);
+
+    blob_arr[i] = blob_list[i];
+  }
 
   // Print out the flood fill buffer
 
@@ -109,23 +123,5 @@ void find_blobs(camera_fb_t *fb, std::vector<blob_t> &blob_arr) {
     }
     Serial.println("]");
   }
-
-}
-
-/*
- * Add the latest blob_arr to the blob buffer
- */
-void add_blobs(blob_buf_t &blob_buf, std::vector<blob_t> &blob_arr) {
-
-  blob_buf.buf[++blob_buf.write_pos] = blob_arr;
-
-}
-
-/*
- * Get the most recent blob_arr from the blob buffer
- */
-void get_latest_blobs(blob_buf_t &blob_buf, std::vector<blob_t> &blob_arr) {
-
-  blob_arr = blob_buf.buf[blob_buf.read_pos++];
 
 }
