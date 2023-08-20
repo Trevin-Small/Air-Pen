@@ -1,6 +1,9 @@
 #include "esp_camera.h"
 #include "image_processing.h"
+#include <stdint.h>
 #include <Arduino.h>
+#include <vector>
+#include <stack>
 
 /*
  * Given the greyscale image in fb->buf, binarize the image and
@@ -22,7 +25,7 @@ void binarize_image(camera_fb_t *fb, uint8_t *bin_fb) {
 
 }
 
-long long floodfill(camera_fb_t *fb, std::vector<uint8_t> & flood_buf, uint32_t pos, uint8_t flood_num, blob_t *blob) {
+long long floodfill(camera_fb_t *fb, std::vector<uint8_t> &flood_buf, uint32_t pos, uint8_t flood_num, blob_t &blob) {
 
   std::stack<uint32_t> stack = std::stack<uint32_t>();
   stack.push(pos);
@@ -37,7 +40,7 @@ long long floodfill(camera_fb_t *fb, std::vector<uint8_t> & flood_buf, uint32_t 
       if (flood_buf[p] == 0 && fb->buf[p] > BLOB_THRESHOLD) {
           flood_buf[p] = flood_num;
           total_brightness += fb->buf[p];
-          blob->size++;
+          blob.size++;
           stack.push(p + 1);
           stack.push(p - 1);
           stack.push(p - fb->width);
@@ -55,7 +58,7 @@ long long floodfill(camera_fb_t *fb, std::vector<uint8_t> & flood_buf, uint32_t 
  * Find all blobs within the given image frame, and calculate their size and brightness
  * Add the 4 highest intensity blobs (avg brightness per pixel) to the blob array
  */
-void find_blobs(camera_fb_t *fb, blob_arr_t *blob_arr) {
+void find_blobs(camera_fb_t *fb, std::vector<blob_t> &blob_arr) {
   const uint8_t * buf = fb->buf;
   const size_t len = fb->len;
   uint8_t blob_num = 0;
@@ -78,7 +81,7 @@ void find_blobs(camera_fb_t *fb, blob_arr_t *blob_arr) {
         .avg_brightness = 0
       };
 
-      long long total_brightness = floodfill(fb, flood_buf, i, blob_num + 1, &blob);
+      long long total_brightness = floodfill(fb, flood_buf, i, blob_num + 1, blob);
 
       blob.x = (blob.max_x - blob.min_x) / 2;
       blob.y = (blob.max_y - blob.min_y) / 2;
@@ -112,17 +115,17 @@ void find_blobs(camera_fb_t *fb, blob_arr_t *blob_arr) {
 /*
  * Add the latest blob_arr to the blob buffer
  */
-void add_blobs(blob_buf_t *blob_buf, blob_arr_t *blob_arr) {
+void add_blobs(blob_buf_t &blob_buf, std::vector<blob_t> &blob_arr) {
 
-  blob_buf->buf[++blob_buf->back] = *blob_arr;
+  blob_buf.buf[++blob_buf.write_pos] = blob_arr;
 
 }
 
 /*
  * Get the most recent blob_arr from the blob buffer
  */
-void get_latest_blobs(blob_buf_t *blob_buf, blob_arr_t *blob_arr) {
+void get_latest_blobs(blob_buf_t &blob_buf, std::vector<blob_t> &blob_arr) {
 
-  *blob_arr = blob_buf->buf[blob_buf->front++];
+  blob_arr = blob_buf.buf[blob_buf.read_pos++];
 
 }

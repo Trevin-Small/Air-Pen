@@ -1,4 +1,6 @@
-#pragma once
+#ifndef IMG_PROCESSING_H
+#define IMG_PROCESSING_H
+
 #include "esp_camera.h"
 #include <stdint.h>
 #include <vector>
@@ -26,14 +28,6 @@ typedef struct blob {
 } blob_t;
 
 /*
- * Array of <BLOB_ARR_SIZE> blobs with the greatest average brightness found in
- * an image frame.
- */
-typedef struct blob_arr {
-  blob_t blobs[BLOB_ARR_SIZE];
-} blob_arr_t;
-
-/*
  * Circular buffer of blob arrays allows processing of multiple samples of blob
  * positions to find blobs which are near one another and similar in size and
  * brightness.
@@ -42,13 +36,15 @@ typedef struct blob_arr {
  * infrared light reference source, even with infrared noise in the environment.
  */
 typedef struct blob_buf {
-  blob_arr_t buf[BLOB_BUF_SIZE];
-  uint8_t front;
-  uint8_t back;
+  std::vector<blob_t> buf[BLOB_BUF_SIZE];
+  uint8_t read_pos;
+  uint8_t write_pos;
 } blob_buf_t;
 
 void binarize_image(camera_fb_t *fb, uint8_t *bin_fb);
-long long floodfill(camera_fb_t *fb, uint8_t *flood_buf, uint32_t pos, uint8_t flood_num, blob_t *blob);
-void find_blobs(camera_fb_t *fb, blob_arr_t *blob_arr);
-void add_blobs(blob_buf_t *blob_buf, blob_arr_t *blob_arr);
-void get_latest_blobs(blob_buf_t *blob_buf, blob_arr_t *blob_arr);
+long long floodfill(camera_fb_t *fb, std::vector<uint8_t> &flood_buf, uint32_t pos, uint8_t flood_num, blob_t &blob);
+void find_blobs(camera_fb_t *fb, std::vector<blob_t> &blob_arr);
+void add_blobs(blob_buf_t &blob_buf, std::vector<blob_t> &blob_arr);
+void get_latest_blobs(blob_buf_t &blob_buf, std::vector<blob_t> &blob_arr);
+
+#endif

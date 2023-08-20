@@ -1,9 +1,11 @@
-#include "esp_camera.h"
 #include "camera_pins.h"
+#include "esp_camera.h"
 #include "image_processing.h"
+#include <stdint.h>
 #include <Arduino.h>
+#include <vector>
 
-blob_arr_t blobs = { 0 };
+std::vector<blob_t> blobs(BLOB_ARR_SIZE);
 
 static camera_config_t config = {
   .pin_pwdn = PWDN_GPIO_NUM,
@@ -60,7 +62,7 @@ void setup() {
   Serial.println("hi");
 
   for (int i = 0; i < BLOB_ARR_SIZE; i++) {
-    blobs.blobs[i] = blob_t { 0 };
+    blobs[i] = blob_t { 0 };
   }
 
     camera_fb_t * fb = esp_camera_fb_get();
@@ -69,7 +71,7 @@ void setup() {
       delay(1000);
   }
 
-  find_blobs(fb, &blobs);
+  find_blobs(fb, blobs);
   Serial.println("\n\n");
 
   //return the fb buffer back to the driver for reuse
@@ -87,11 +89,11 @@ void loop() {
       delay(1000);
   }
 
-  find_blobs(fb, &blobs);
+  find_blobs(fb, blobs);
   Serial.println("\n\n");
 
   //return the fb buffer back to the driver for reuse
   esp_camera_fb_return(fb);
 
-  delay(50);
+  delay(5000);
 }
