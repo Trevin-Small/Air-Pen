@@ -8,11 +8,12 @@
 #include <stack>
 
 #define MAX_BLOBS_PER_FRAME   8   // Maximum number of blobs to find in an image.
-#define BLOB_THRESHOLD      100   // Threshold to categorize a pixel as white/black
 #define BLOB_BUF_SIZE         8   // Number of blob arrays to keep in the buffer
 
-#define PEN_BLOB_MIN_SIZE     2   // Min size the reference IR blob wil show up as
-#define PEN_BLOB_MAX_SIZE    10   // Max size the reference IR blob wil show up as
+#define REF_BLOB_THRESHOLD  100   // Threshold to categorize a pixel as white/black
+#define REF_BLOB_MIN_SIZE     2   // Min size the reference IR blob wil show up as
+#define REF_BLOB_MAX_SIZE    10   // Max size the reference IR blob wil show up as
+#define REF_BLOB_MAX_SPEED   10   // Max speed the ref IR blob can move in pixels/millisec
 
 
 /*
@@ -38,7 +39,7 @@ typedef struct blob {
  *
  * Helpful for finding specific light sources.
  */
-circular_buffer<std::vector<blob_t>> blob_buf;
+extern circular_buffer<std::vector<blob_t>> blob_buf;
 
 
 void binarize_image(camera_fb_t *fb, uint8_t *bin_fb);

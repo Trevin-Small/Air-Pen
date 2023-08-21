@@ -16,7 +16,7 @@ void binarize_image(camera_fb_t *fb, uint8_t *bin_fb) {
 
   for (int i = 0; i < len; i++) {
 
-    if (buf[i] < BLOB_THRESHOLD) {
+    if (buf[i] < REF_BLOB_THRESHOLD) {
       bin_fb[i] = 0;
     } else {
       bin_fb[i] = 255;
@@ -38,10 +38,26 @@ long long floodfill(camera_fb_t *fb, std::vector<uint8_t> &flood_buf, uint32_t p
       stack.pop();
       if (p < 0 || p >= fb->len) continue;
 
-      if (flood_buf[p] == 0 && fb->buf[p] > BLOB_THRESHOLD) {
+      if (flood_buf[p] == 0 && fb->buf[p] > REF_BLOB_THRESHOLD) {
           flood_buf[p] = flood_num;
           total_brightness += fb->buf[p];
           blob.size++;
+
+          uint8_t pos_x = blob.pos % fb->width;
+          uint8_t pos_y = blob.pos / fb->width;
+
+          if (pos_x < blob.min_x) {
+            blob.min_x = pos_x;
+          } else if (pos > blob.max_x) {
+            blob.max_x = pos_x;
+          }
+
+          if (pos_y < blob.min_y) {
+            blob.min_x = pos_y;
+          } else if (pos > blob.max_y) {
+            blob.max_y = pos_y;
+          }
+
           stack.push(p + 1);
           stack.push(p - 1);
           stack.push(p - fb->width);
@@ -62,14 +78,14 @@ long long floodfill(camera_fb_t *fb, std::vector<uint8_t> &flood_buf, uint32_t p
 void find_blobs(camera_fb_t *fb, std::vector<blob_t> &blob_arr) {
   const uint8_t * buf = fb->buf;
   const size_t len = fb->len;
-  uint8_t blob_num = 0;
+  uint8_t flood_num = 1;
   std::vector<blob_t> blob_list(MAX_BLOBS_PER_FRAME, blob_t { 0 });
   std::vector<uint8_t> flood_buf(len, 0);
 
   for (uint32_t i = 0; i < len; i++) {
 
     // If the pixel is above the threshold and hasn't been added to a blob yet
-    if (flood_buf[i] == 0 && buf[i] > BLOB_THRESHOLD) {
+    if (flood_buf[i] == 0 && buf[i] > REF_BLOB_THRESHOLD) {
       blob_t blob = {
         .size = 0,
         .pos = i,
@@ -82,37 +98,24 @@ void find_blobs(camera_fb_t *fb, std::vector<blob_t> &blob_arr) {
         .avg_brightness = 0
       };
 
-      long long total_brightness = floodfill(fb, flood_buf, i, blob_num + 1, blob);
+      long long total_brightness = floodfill(fb, flood_buf, i, flood_num, blob);
 
-      blob.x = (blob.max_x - blob.min_x) / 2;
-      blob.y = (blob.max_y - blob.min_y) / 2;
+      blob.x = blob.min_x + (blob.max_x - blob.min_x) / 2;
+      blob.y = blob.min_y + (blob.max_y - blob.min_y) / 2;
       blob.avg_brightness = total_brightness / blob.size;
 
       blob_list.push_back(blob);
+      flood_num++;
 
     }
 
   }
 
   struct {
-    bool operator()(blob_t a, blob_t b) { return a.avg_brightness > b.avg_brightness; }
+    bool operator()(blob_t a, blob_t b) const { return a.avg_brightness > b.avg_brightness; }
   } blob_cmp;
 
-  std::sort(blob_list.begin(), blob_list.end());
-
-  for (int i = 0; i < MAX_BLOBS_PER_FRAME; i++) {
-
-    Serial.print("Blob ");
-    Serial.print(i);
-    Serial.print(": ");
-    Serial.print(blob_list[i].x);
-    Serial.print(", ");
-    Serial.print(blob_list[i].y);
-    Serial.print(", ");
-    Serial.print(blob_list[i].avg_brightness);
-
-    blob_arr[i] = blob_list[i];
-  }
+  std::sort(blob_list.begin(), blob_list.end(), blob_cmp);
 
   // Print out the flood fill buffer
 
@@ -122,6 +125,24 @@ void find_blobs(camera_fb_t *fb, std::vector<blob_t> &blob_arr) {
       Serial.print(flood_buf[i * fb->width + j]);
     }
     Serial.println("]");
+  }
+
+    for (int i = 0; i < MAX_BLOBS_PER_FRAME; i++) {
+
+    Serial.print("Blob ");
+    Serial.print(i + 1);
+    Serial.print(": ");
+    Serial.print(blob_list[i].min_x);
+    Serial.print(" <-> ");
+    Serial.print(blob_list[i].max_x);
+    Serial.print(", ");
+    Serial.print(blob_list[i].min_y);
+    Serial.print(" <-> ");
+    Serial.print(blob_list[i].max_y);
+    Serial.print(", ");
+    Serial.println(blob_list[i].avg_brightness);
+
+    blob_arr[i] = blob_list[i];
   }
 
 }

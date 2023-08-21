@@ -5,7 +5,7 @@
 #include <Arduino.h>
 #include <vector>
 
-std::vector<blob_t> blobs(BLOB_ARR_SIZE);
+std::vector<blob_t> blobs(MAX_BLOBS_PER_FRAME, blob_t { 0 });
 
 static camera_config_t config = {
   .pin_pwdn = PWDN_GPIO_NUM,
@@ -61,23 +61,7 @@ void setup() {
 
   Serial.println("hi");
 
-  for (int i = 0; i < BLOB_ARR_SIZE; i++) {
-    blobs[i] = blob_t { 0 };
-  }
-
-    camera_fb_t * fb = esp_camera_fb_get();
-  if (!fb) {
-      Serial.println("Camera Capture Failed");
-      delay(1000);
-  }
-
-  find_blobs(fb, blobs);
-  Serial.println("\n\n");
-
-  //return the fb buffer back to the driver for reuse
-  esp_camera_fb_return(fb);
-
-  delay(5000);
+  delay(3000);
 }
 
 void loop() {
@@ -95,5 +79,5 @@ void loop() {
   //return the fb buffer back to the driver for reuse
   esp_camera_fb_return(fb);
 
-  delay(5000);
+  delay(1000);
 }
