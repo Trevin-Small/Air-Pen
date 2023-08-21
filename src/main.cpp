@@ -33,10 +33,9 @@ static camera_config_t config = {
 
   .pixel_format = PIXFORMAT_GRAYSCALE,
   .frame_size = FRAMESIZE_96X96,
-  .jpeg_quality = 12,
-  .fb_count = 1,
+  .jpeg_quality = 63,
+  .fb_count = 3,
   .fb_location = CAMERA_FB_IN_PSRAM,
-  //.pixel_format = PIXFORMAT_RGB565, // for face detection/recognition
   .grab_mode = CAMERA_GRAB_LATEST,
 };
 
@@ -64,20 +63,22 @@ void setup() {
   delay(3000);
 }
 
+unsigned long ms = 0;
+unsigned long ms2 = 0;
+
 void loop() {
+
+  ms = millis();
 
   //acquire a fb
   camera_fb_t * fb = esp_camera_fb_get();
-  if (!fb) {
-      Serial.println("Camera Capture Failed");
-      delay(1000);
-  }
 
-  find_blobs(fb, blobs);
-  Serial.println("\n\n");
+  find_blobs2(fb, blobs);
 
   //return the fb buffer back to the driver for reuse
   esp_camera_fb_return(fb);
 
-  delay(1000);
+  ms2 = millis();
+  Serial.println(ms2 - ms);
+
 }
