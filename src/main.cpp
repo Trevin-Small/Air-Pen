@@ -5,7 +5,7 @@
 #include <Arduino.h>
 #include <vector>
 
-std::vector<blob_t> blobs(MAX_BLOBS_PER_FRAME, blob_t { 0 });
+std::vector<blob_t> blobs;
 
 static camera_config_t config = {
   .pin_pwdn = PWDN_GPIO_NUM,
@@ -52,33 +52,48 @@ esp_err_t camera_init() {
 }
 
 void setup() {
+
   Serial.begin(115200);
 
   esp_err_t err = camera_init();
 
-  delay(3000);
+  sensor_t * cam = esp_camera_sensor_get();
+  cam->set_hmirror(cam, 1);
+  cam->set_brightness(cam, 0);     // -2 to 2
+  cam->set_contrast(cam, 1);       // -2 to 2
+  cam->set_saturation(cam, 2);     // -2 to 2
+
+  /*
+  for (int i = 0; i < 10; i++) {
+    esp_camera_fb_get();
+    delay(10);
+  }
+
+  cam->set_whitebal(cam, 0);
+  cam->set_awb_gain(cam, 0);
+  cam->set_gain_ctrl(cam, 0);
+  cam->set_exposure_ctrl(cam, 0);
+  cam->set_aec2(cam, 0);
+  */
 
   Serial.println("hi");
 
   delay(3000);
 }
 
-unsigned long ms = 0;
-unsigned long ms2 = 0;
 
 void loop() {
-
-  ms = millis();
 
   //acquire a fb
   camera_fb_t * fb = esp_camera_fb_get();
 
-  find_blobs2(fb, blobs);
+  find_blobs(fb, blobs, REF_BLOB_THRESHOLD);
 
   //return the fb buffer back to the driver for reuse
   esp_camera_fb_return(fb);
 
-  ms2 = millis();
-  Serial.println(ms2 - ms);
+  blobs.clear();
+
+  delay(5000);
 
 }
