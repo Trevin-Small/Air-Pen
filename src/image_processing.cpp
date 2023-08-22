@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <iterator>
 #include <vector>
+#include <unordered_map>
 
 using namespace std;
 
@@ -59,13 +60,10 @@ void find_blobs(camera_fb_t *fb, vector<blob_t> &blob_arr, uint8_t blob_threshol
 
   vector<int> labels(len, 0);
   vector<int> parent(len, 0);
-  //vector<blob_t> blobs(len, blob_t { 0 });
+  unordered_map<int, blob_t> blobs;
 
   for (int i = 0; i < len; i++) {
     parent[i] = i;
-  }
-
-  for (int i = 0; i < len; i++) {
 
     // If the pixel is not part of the background
     if (buf[i] > blob_threshold) {
@@ -94,6 +92,10 @@ void find_blobs(camera_fb_t *fb, vector<blob_t> &blob_arr, uint8_t blob_threshol
       } else if (up_neighbor) {
         labels[i] = labels[up];
       } else { // This pixel is part of a new component
+
+        unsigned int x = i % width;
+        unsigned int y = i / width;
+
         labels[i] = label_val;
         label_val++;
       }
@@ -102,12 +104,46 @@ void find_blobs(camera_fb_t *fb, vector<blob_t> &blob_arr, uint8_t blob_threshol
 
   }
 
-  for (int i = 0; i < height; i++) {
-    Serial.print("[");
-    for (int j = 0; j < width; j++) {
-      Serial.print(char (find(parent, labels[j + i * width]) + 64) );
+  for (unsigned int y = 0; y < height; y++) {
+
+    for (unsigned int x = 0; x < width; x++) {
+
+      int pos = x + y * width;
+
+      int val = find(parent, labels[pos]);
+
+      if (blobs.count(val) == 0) {
+
+        blobs.insert({
+          val,
+          blob_t {
+            .left = x,
+            .right = x,
+            .top = y,
+            .bottom = y,
+            .size = 1,
+            .total_brightness = buf[pos]
+          }
+        });
+
+      } else {
+
+        blob_t *b = &blobs.at(val);
+        if (x < b->left) b->left = x;
+        if (x > b->right) b->right = x;
+        if (y < b->top) b->top = y;
+        if (y > b->bottom) b->bottom = y;
+        b->size++;
+        b->total_brightness += buf[pos];
+
+      }
+
     }
-    Serial.println("]");
+
+  }
+
+  for (const auto i : blobs) {
+    blob_arr.push_back(i.second);
   }
 
 }

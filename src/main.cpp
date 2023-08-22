@@ -95,7 +95,16 @@ void loop() {
 
   unsigned long ms2 = millis();
 
-  //Serial.println(ms2 - ms);
+  Serial.print("Blob Detection Runtime: ");
+  Serial.print(ms2 - ms);
+  Serial.println("ms");
+
+  for (const auto b : blobs) {
+    Serial.print("Blob size: ");
+    Serial.println(b.size);
+  }
+
+  blobs.clear();
 
   //return the fb buffer back to the driver for reuse
   esp_camera_fb_return(fb);

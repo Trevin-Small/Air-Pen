@@ -3,7 +3,6 @@
 
 #include "esp_camera.h"
 #include "circular_buffer.h"
-#include <stdint.h>
 #include <vector>
 #include <stack>
 
@@ -22,12 +21,12 @@ using namespace std;
  */
 
 typedef struct blob {
-  uint32_t left;            // Left x coordinate of the blob
-  uint32_t right;           // Right x coordinate of the blob
-  uint32_t top;             // Top y coordinate of the blob
-  uint32_t bottom;          // Bottom y coordinate of the blob
-  uint32_t size;            // Number of pixels in the blob
-  uint32_t total_brightness;   // total pixel brightness of the blob
+  unsigned int left;            // Left x coordinate of the blob
+  unsigned int right;           // Right x coordinate of the blob
+  unsigned int top;             // Top y coordinate of the blob
+  unsigned int bottom;          // Bottom y coordinate of the blob
+  unsigned int size;            // Number of pixels in the blob
+  unsigned int total_brightness;   // total pixel brightness of the blob
 } blob_t;
 
 /*
@@ -41,9 +40,8 @@ extern circular_buffer<std::vector<blob_t>> blob_buf;
 
 
 void binarize_image(camera_fb_t *fb, uint8_t *bin_fb);
-//int find(vector<int> &parent, int p);
-//void my_union(vector<int> &parent, int p, int q);
-vector<int> set_union(vector<int> set_a, vector<int> set_b);
+int find(vector<int> &parent, int p);
+void my_union(vector<int> &parent, int p, int q);
 void find_blobs(camera_fb_t *fb, std::vector<blob_t> &blob_arr, uint8_t blob_threshold);
 
 #endif
