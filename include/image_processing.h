@@ -10,15 +10,17 @@
 #define MAX_BLOBS_PER_FRAME   8   // Maximum number of blobs to find in an image.
 #define BLOB_BUF_SIZE         8   // Number of blob arrays to keep in the buffer
 
-#define REF_BLOB_THRESHOLD  180   // Threshold to categorize a pixel as white/black
+#define REF_BLOB_THRESHOLD  120   // Threshold to categorize a pixel as white/black
 #define REF_BLOB_MIN_SIZE     2   // Min size the reference IR blob wil show up as
 #define REF_BLOB_MAX_SIZE    10   // Max size the reference IR blob wil show up as
 #define REF_BLOB_MAX_SPEED   10   // Max speed the ref IR blob can move in pixels/millisec
 
+using namespace std;
 
 /*
  * A blob is defined as a group of bright pixels within a greyscale image.
  */
+
 typedef struct blob {
   uint32_t left;            // Left x coordinate of the blob
   uint32_t right;           // Right x coordinate of the blob
@@ -27,13 +29,6 @@ typedef struct blob {
   uint32_t size;            // Number of pixels in the blob
   uint32_t total_brightness;   // total pixel brightness of the blob
 } blob_t;
-
-typedef struct component {
-  int parent;
-  int size;
-  blob_t *blob;
-} component_t;
-
 
 /*
  * Circular buffer of vectors of blobs. Looking through blobs in the buffer allows
@@ -46,7 +41,9 @@ extern circular_buffer<std::vector<blob_t>> blob_buf;
 
 
 void binarize_image(camera_fb_t *fb, uint8_t *bin_fb);
-//long long floodfill(camera_fb_t *fb, std::vector<uint8_t> &flood_buf, uint32_t pos, uint8_t flood_num, blob_t &blob);
+//int find(vector<int> &parent, int p);
+//void my_union(vector<int> &parent, int p, int q);
+vector<int> set_union(vector<int> set_a, vector<int> set_b);
 void find_blobs(camera_fb_t *fb, std::vector<blob_t> &blob_arr, uint8_t blob_threshold);
 
 #endif

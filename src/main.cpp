@@ -63,6 +63,8 @@ void setup() {
   cam->set_contrast(cam, 1);       // -2 to 2
   cam->set_saturation(cam, 2);     // -2 to 2
 
+  delay(3000);
+
   /*
   for (int i = 0; i < 10; i++) {
     esp_camera_fb_get();
@@ -87,12 +89,16 @@ void loop() {
   //acquire a fb
   camera_fb_t * fb = esp_camera_fb_get();
 
+  unsigned long ms = millis();
+
   find_blobs(fb, blobs, REF_BLOB_THRESHOLD);
+
+  unsigned long ms2 = millis();
+
+  //Serial.println(ms2 - ms);
 
   //return the fb buffer back to the driver for reuse
   esp_camera_fb_return(fb);
-
-  blobs.clear();
 
   delay(5000);
 
