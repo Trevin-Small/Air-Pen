@@ -1,6 +1,8 @@
 #ifndef CAM_PINS_H
 #define CAM_PINS_H
 
+#include "esp_camera.h"
+
 #define PWDN_GPIO_NUM     -1
 #define RESET_GPIO_NUM    -1
 #define XCLK_GPIO_NUM     10
@@ -20,5 +22,7 @@
 #define PCLK_GPIO_NUM     13
 
 #define LED_GPIO_NUM      21
+
+esp_err_t camera_init();
 
 #endif

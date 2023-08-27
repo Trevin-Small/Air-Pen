@@ -8,8 +8,9 @@
 
 #define MAX_BLOBS_PER_FRAME   8   // Maximum number of blobs to find in an image.
 #define BLOB_BUF_SIZE         8   // Number of blob arrays to keep in the buffer
+#define MIN_BLOB_SIZE         5
 
-#define REF_BLOB_THRESHOLD  120   // Threshold to categorize a pixel as white/black
+#define REF_BLOB_THRESHOLD  220   // Threshold to categorize a pixel as white/black
 #define REF_BLOB_MIN_SIZE     2   // Min size the reference IR blob wil show up as
 #define REF_BLOB_MAX_SIZE    10   // Max size the reference IR blob wil show up as
 #define REF_BLOB_MAX_SPEED   10   // Max speed the ref IR blob can move in pixels/millisec
@@ -21,12 +22,13 @@ using namespace std;
  */
 
 typedef struct blob {
-  unsigned int left;            // Left x coordinate of the blob
-  unsigned int right;           // Right x coordinate of the blob
-  unsigned int top;             // Top y coordinate of the blob
-  unsigned int bottom;          // Bottom y coordinate of the blob
-  unsigned int size;            // Number of pixels in the blob
+  unsigned int left;               // Left x coordinate of the blob
+  unsigned int right;              // Right x coordinate of the blob
+  unsigned int top;                // Top y coordinate of the blob
+  unsigned int bottom;             // Bottom y coordinate of the blob
+  unsigned int size;               // Number of pixels in the blob
   unsigned int total_brightness;   // total pixel brightness of the blob
+  unsigned int avg_brightness;     // Average pixel brightness of the blob
 } blob_t;
 
 /*

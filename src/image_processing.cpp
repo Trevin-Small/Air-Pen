@@ -122,7 +122,8 @@ void find_blobs(camera_fb_t *fb, vector<blob_t> &blob_arr, uint8_t blob_threshol
             .top = y,
             .bottom = y,
             .size = 1,
-            .total_brightness = buf[pos]
+            .total_brightness = buf[pos],
+            .avg_brightness = 0
           }
         });
 
@@ -141,9 +142,34 @@ void find_blobs(camera_fb_t *fb, vector<blob_t> &blob_arr, uint8_t blob_threshol
     }
 
   }
+  /*
+  for (int y = 0; y < height; y++) {
 
-  for (const auto i : blobs) {
+    Serial.print("[");
+
+    for (int x = 0; x < width; x++) {
+
+      Serial.print(char (labels[y * width + x] + 64));
+
+    }
+
+    Serial.println("]");
+
+  }
+  */
+
+  blobs.erase(0);
+
+  for (auto & i : blobs) {
+    if (i.second.size < MIN_BLOB_SIZE) continue;
+    i.second.avg_brightness = i.second.total_brightness / i.second.size;
     blob_arr.push_back(i.second);
   }
+
+  struct {
+    bool operator()(const blob_t &a, const blob_t &b) const { return a.avg_brightness > b.avg_brightness; }
+  } blob_cmp;
+
+  sort(blob_arr.begin(), blob_arr.end(), blob_cmp);
 
 }

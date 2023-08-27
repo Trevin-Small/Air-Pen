@@ -1,114 +1,92 @@
-#include "camera_pins.h"
 #include "esp_camera.h"
+#include "camera_config.h"
 #include "image_processing.h"
 #include <stdint.h>
 #include <Arduino.h>
+//#include <BlePeripheral.h>
+#include <BleCombo.h>
 #include <vector>
 
-std::vector<blob_t> blobs;
+using namespace std;
 
-static camera_config_t config = {
-  .pin_pwdn = PWDN_GPIO_NUM,
-  .pin_reset = RESET_GPIO_NUM,
-  .pin_xclk = XCLK_GPIO_NUM,
-  .pin_sscb_sda = SIOD_GPIO_NUM,
-  .pin_sscb_scl = SIOC_GPIO_NUM,
+//BlePeripheral AirPen;
+BleComboKeyboard Keyboard;
+BleComboMouse Mouse(&Keyboard);
+vector<blob_t> blobs;
 
-  .pin_d7 = Y9_GPIO_NUM,
-  .pin_d6 = Y8_GPIO_NUM,
-  .pin_d5 = Y7_GPIO_NUM,
-  .pin_d4 = Y6_GPIO_NUM,
-  .pin_d3 = Y5_GPIO_NUM,
-  .pin_d2 = Y4_GPIO_NUM,
-  .pin_d1 = Y3_GPIO_NUM,
-  .pin_d0 = Y2_GPIO_NUM,
-
-  .pin_vsync = VSYNC_GPIO_NUM,
-  .pin_href = HREF_GPIO_NUM,
-  .pin_pclk = PCLK_GPIO_NUM,
-
-  .xclk_freq_hz = 20000000,
-  .ledc_timer = LEDC_TIMER_0,
-  .ledc_channel = LEDC_CHANNEL_0,
-
-  .pixel_format = PIXFORMAT_GRAYSCALE,
-  .frame_size = FRAMESIZE_96X96,
-  .jpeg_quality = 63,
-  .fb_count = 3,
-  .fb_location = CAMERA_FB_IN_PSRAM,
-  .grab_mode = CAMERA_GRAB_LATEST,
-};
-
-// camera init
-esp_err_t camera_init() {
-  //initialize the camera
-  esp_err_t err = esp_camera_init(&config);
-  if (err != ESP_OK) {
-      Serial.println("Camera Init Failed");
-      return err;
-  }
-
-  return ESP_OK;
-}
+const int SCREEN_WIDTH = 1500;
+const int SCREEN_HEIGHT = 1000;
 
 void setup() {
 
   Serial.begin(115200);
 
+  //AirPen = BlePeripheral(true, true);
+
+  Mouse.begin();
+  Keyboard.begin();
+
   esp_err_t err = camera_init();
 
   sensor_t * cam = esp_camera_sensor_get();
-  cam->set_hmirror(cam, 1);
-  cam->set_brightness(cam, 0);     // -2 to 2
-  cam->set_contrast(cam, 1);       // -2 to 2
-  cam->set_saturation(cam, 2);     // -2 to 2
-
-  delay(3000);
-
-  /*
-  for (int i = 0; i < 10; i++) {
-    esp_camera_fb_get();
-    delay(10);
-  }
-
-  cam->set_whitebal(cam, 0);
+  cam->set_brightness(cam, -1);     // -2 to 2
+  cam->set_contrast(cam, 2);       // -2 to 2
+  cam->set_saturation(cam, 0);     // -2 to 2
   cam->set_awb_gain(cam, 0);
-  cam->set_gain_ctrl(cam, 0);
-  cam->set_exposure_ctrl(cam, 0);
   cam->set_aec2(cam, 0);
-  */
+  cam->set_ae_level(cam, 0);
+  cam->set_agc_gain(cam, 0);
+  cam->set_bpc(cam, 0);
+  cam->set_wpc(cam, 0);
+  cam->set_raw_gma(cam, 0);
+  cam->set_lenc(cam, 0);
 
-  Serial.println("hi");
+  Serial.println("Starting Air Pen...");
 
   delay(3000);
 }
 
+int get_x(blob_t b) {
+  return b.left + (b.right - b.left) / 2;
+}
+
+int get_y(blob_t b) {
+  return b.top + (b.bottom - b.top) / 2;
+}
+
+int map_x_to_screen(int x, int frame_width) {
+  return (SCREEN_WIDTH / frame_width) * x;
+}
+
+int map_y_to_screen(int y, int frame_height) {
+  return (SCREEN_HEIGHT / frame_height) * y;
+}
+
+int currX = SCREEN_WIDTH / 2;
+int currY = SCREEN_HEIGHT / 2;
 
 void loop() {
 
   //acquire a fb
   camera_fb_t * fb = esp_camera_fb_get();
 
-  unsigned long ms = millis();
-
   find_blobs(fb, blobs, REF_BLOB_THRESHOLD);
 
-  unsigned long ms2 = millis();
+  if(blobs.size() > 0 && Keyboard.isConnected()) {
 
-  Serial.print("Blob Detection Runtime: ");
-  Serial.print(ms2 - ms);
-  Serial.println("ms");
+    int x = map_x_to_screen(get_x(blobs.back()), 96);
+    int y = map_y_to_screen(get_y(blobs.back()), 96);
+    blobs.clear();
 
-  for (const auto b : blobs) {
-    Serial.print("Blob size: ");
-    Serial.println(b.size);
+    Mouse.move(x - currX, y - currY);
+    currX = x;
+    currY = y;
   }
 
-  blobs.clear();
 
   //return the fb buffer back to the driver for reuse
   esp_camera_fb_return(fb);
 
-  delay(5000);
+  delay(10);
 
 }
