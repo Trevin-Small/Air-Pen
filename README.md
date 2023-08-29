@@ -24,18 +24,19 @@ Some clever image processing and up-sampling allows for fast, accurate tracking 
 
 With Air Pen's companion IR lighthouse placed near your presentation screen, the Pen is able to track its location anywhere in the room, and therefore convert your movements into mouse movements!
 
-### Product Timeline
-July 22nd - First Working Prototype
+## Product Timeline
+### July 22nd - First Working Prototype
 - Built with an ESP32 Mini, an old Wiimote, a portable charger, a ruler and scotch tape!
 
-August 15th - Second Working Prototype
+### August 15th - Second Working Prototype
 - Built with an ESP32-S3 SoC and an OV2460 Image Sensor
 - Custom image processing algorithms and a higher FOV image sensor increased the speed and usability of the device.
 
-August 27th - Third Prototype
+### August 27th - Third Prototype
 - Integrated Rechargable battery allows for freedom of motion anywhere in the room
+- Improved motion-filtering makes cursor control easier
 - Working distance up to 15 feet
 
-September ??th - Fourth Prototype
+### September ??th - Fourth Prototype
 - Integrated Long-Pass 850nm IR filter will remove the noise of ambient light improving tracking accuracy
 - Anti-reflective lens coating should reduce "double-vision" - false detections of IR light from internal reflection
