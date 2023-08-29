@@ -37,6 +37,9 @@ With Air Pen's companion IR lighthouse placed near your presentation screen, the
 - Improved motion-filtering makes cursor control easier
 - Working distance up to 15 feet
 
-### September ??th - Fourth Prototype
+### September ?? - Fourth Prototype?
 - Integrated Long-Pass 850nm IR filter will remove the noise of ambient light improving tracking accuracy
 - Anti-reflective lens coating should reduce "double-vision" - false detections of IR light from internal reflection
+
+### Future Development
+- The development of this project will continue to be documented here, and many more improvements are yet to come!
