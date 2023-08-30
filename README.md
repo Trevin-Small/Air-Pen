@@ -33,8 +33,8 @@ With Air Pen's companion IR lighthouse placed near your presentation screen, the
 - Custom image processing algorithms and a higher FOV image sensor increased the speed and usability of the device.
 
 ### August 27th - Third Prototype
-- Integrated Rechargable battery allows for freedom of motion anywhere in the room
-- Improved motion-filtering makes cursor control easier
+- Integrated Rechargeable battery allows for freedom of motion anywhere in the room
+- Improved motion filtering makes cursor control easier
 - Working distance up to 15 feet
 
 ### September ?? - Fourth Prototype?
