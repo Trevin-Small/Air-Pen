@@ -34,14 +34,22 @@ public:
         return data[read_pos];
     }
 
-    // remove oldest object from queue:
-    void pop() {
+    // remove and return oldest object from queue:
+    T pop() {
+
+        T t = data[read_pos];
         // destroy the object:
         data[read_pos++].~T();
 
         // keep pointer in bounds.
         read_pos %= capacity;
         --in_use;
+
+        return t;
+    }
+
+    bool full() {
+        return in_use == capacity;
     }
 
 ~circular_buffer() {

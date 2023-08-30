@@ -1,27 +1,34 @@
-#ifndef MOUSE_H
-#define MOUSE_H
+#ifndef BLE_H
+#define BLE_H
 
-#include <BleCombo.h>
+#include <BleComboKeyboard.h>
+#include <BleComboMouse.h>
 #include <utility>
+#include <string>
+
+
+#define SCREEN_WIDTH    1500
+#define SCREEN_HEIGHT   1000
 
 using namespace std;
 
 class BlePeripheral {
 
+private:
+  BleComboKeyboard Keyboard;
+  BleComboMouse Mouse;
+  pair<int, int> mouse_coords;
+
 public:
-  BlePeripheral(bool keyboard_enabled, bool mouse_enabled);
+  BlePeripheral(std::string name, std::string manufacturer_name);
+  void begin();
+  bool is_connected();
   pair<int, int> get_mouse_coords();
-  pair<int, int> update_mouse_coords();
-  void send_mouse_coords();
+  void send_mouse_coords(pair<int, int> coords);
   void send_click(int button);
   void send_keystroke(int key);
+  void update_battery_level(uint8_t bat_level);
 
-private:
-  bool keyboard_enabled;
-  bool mouse_enabled;
-  int mouse_x;
-  int mouse_y;
 };
-
 
 #endif

@@ -1,33 +1,36 @@
 #include "esp_camera.h"
 #include "camera_config.h"
 #include "image_processing.h"
-#include <stdint.h>
+#include "circular_buffer.h"
+#include "BlePeripheral.h"
+#include "mouse_ctrl.h"
 #include <Arduino.h>
-//#include <BlePeripheral.h>
-#include <BleCombo.h>
+#include <stdint.h>
+#include <string>
 #include <vector>
 
 using namespace std;
 
-//BlePeripheral AirPen;
-BleComboKeyboard Keyboard;
-BleComboMouse Mouse(&Keyboard);
-vector<blob_t> blobs;
+// Initialize the BLE device as a BLE peripheral
+BlePeripheral BlePeriph("Scribe", "TKS");
 
-const int SCREEN_WIDTH = 1500;
-const int SCREEN_HEIGHT = 1000;
+/*
+ * Circular buffer of blobs in image frames. Connecting blobs in sequential
+ * images frames allows for identifying blobs that are similar in
+ * size, position, and intensity, moving in the same trend, and/or
+ * flashing at certain frequencies.
+ *
+ * Used for recognizing the IR lighthouse amongst ambient IR noise.
+ */
+circular_buffer<vector<blob_t>> blob_buf(BLOB_BUF_SIZE);
+
 
 void setup() {
 
   Serial.begin(115200);
 
-  //AirPen = BlePeripheral(true, true);
-
-  Mouse.begin();
-  Keyboard.begin();
-
+  // Initialize camera and its settings
   esp_err_t err = camera_init();
-
   sensor_t * cam = esp_camera_sensor_get();
   cam->set_brightness(cam, -1);     // -2 to 2
   cam->set_contrast(cam, 2);       // -2 to 2
@@ -41,48 +44,27 @@ void setup() {
   cam->set_raw_gma(cam, 0);
   cam->set_lenc(cam, 0);
 
-  Serial.println("Starting Air Pen...");
+  delay(1000);
 
-  delay(3000);
+  // Enable bluetooth
+  BlePeriph.begin();
 }
-
-int get_x(blob_t b) {
-  return b.left + (b.right - b.left) / 2;
-}
-
-int get_y(blob_t b) {
-  return b.top + (b.bottom - b.top) / 2;
-}
-
-int map_x_to_screen(int x, int frame_width) {
-  return (SCREEN_WIDTH / frame_width) * x;
-}
-
-int map_y_to_screen(int y, int frame_height) {
-  return (SCREEN_HEIGHT / frame_height) * y;
-}
-
-int currX = SCREEN_WIDTH / 2;
-int currY = SCREEN_HEIGHT / 2;
 
 void loop() {
 
   //acquire a fb
   camera_fb_t * fb = esp_camera_fb_get();
 
-  find_blobs(fb, blobs, REF_BLOB_THRESHOLD);
+  // Find the blobs in the image frame and add them to the blob buffer
+  blob_buf.push(find_blobs(fb, REF_BLOB_THRESHOLD));
 
-  if(blobs.size() > 0 && Keyboard.isConnected()) {
+  // If the device is connected to a computer via Bluetooth
+  if (BlePeriph.is_connected()) {
 
-    int x = map_x_to_screen(get_x(blobs.back()), 96);
-    int y = map_y_to_screen(get_y(blobs.back()), 96);
-    blobs.clear();
+    // Calculate the mouse coords with blob buf and send them via BlePeriph
+    send_mouse_coords(BlePeriph, blob_buf, fb);
 
-    Mouse.move(x - currX, y - currY);
-    currX = x;
-    currY = y;
   }
-
 
   //return the fb buffer back to the driver for reuse
   esp_camera_fb_return(fb);

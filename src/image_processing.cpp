@@ -1,9 +1,7 @@
 #include "esp_camera.h"
 #include "image_processing.h"
 #include <stdint.h>
-#include <Arduino.h>
 #include <algorithm>
-#include <iterator>
 #include <vector>
 #include <unordered_map>
 
@@ -30,18 +28,23 @@ void binarize_image(camera_fb_t *fb, uint8_t *bin_fb) {
 }
 
 
-int find(vector<int> &parent, int p) {// returns the root
+/*
+ * Find the root of a component in a disjoint-set data structure
+ */
+int find(vector<int> &parent, int p) {
   if (p == parent[p]) return p;
   parent[p] = find(parent, parent[p]); // path compression
   return parent[p];
 }
 
-// union by size (smaller root -> larger root)
+/*
+ * Union distjoint sets by root (smaller root becomes parent of larger root)
+ */
 void my_union(vector<int> &parent, int p, int q) {
   int a = find(parent, p), b = find(parent, q);// a = rootP, b = rootQ
   if (a == b) return;
-  if  (a < b) { parent[a]=b; }
-  else  { parent[b] = a; }
+  if  (a < b) { parent[b]=a; }
+  else  { parent[a] = b; }
 }
 
 /*
@@ -51,7 +54,7 @@ void my_union(vector<int> &parent, int p, int q) {
  * Based on: https://en.wikipedia.org/wiki/Connected-component_labeling
  */
 
-void find_blobs(camera_fb_t *fb, vector<blob_t> &blob_arr, uint8_t blob_threshold) {
+vector<blob_t> find_blobs(camera_fb_t *fb, uint8_t blob_threshold) {
   const uint8_t * buf = fb->buf;
   int len = fb->len;
   int width = fb->width;
@@ -60,7 +63,7 @@ void find_blobs(camera_fb_t *fb, vector<blob_t> &blob_arr, uint8_t blob_threshol
 
   vector<int> labels(len, 0);
   vector<int> parent(len, 0);
-  unordered_map<int, blob_t> blobs;
+  unordered_map<int, blob_t> blob_map;
 
   for (int i = 0; i < len; i++) {
     parent[i] = i;
@@ -112,9 +115,9 @@ void find_blobs(camera_fb_t *fb, vector<blob_t> &blob_arr, uint8_t blob_threshol
 
       int val = find(parent, labels[pos]);
 
-      if (blobs.count(val) == 0) {
+      if (blob_map.count(val) == 0) {
 
-        blobs.insert({
+        blob_map.insert({
           val,
           blob_t {
             .left = x,
@@ -129,7 +132,7 @@ void find_blobs(camera_fb_t *fb, vector<blob_t> &blob_arr, uint8_t blob_threshol
 
       } else {
 
-        blob_t *b = &blobs.at(val);
+        blob_t *b = &blob_map.at(val);
         if (x < b->left) b->left = x;
         if (x > b->right) b->right = x;
         if (y < b->top) b->top = y;
@@ -142,34 +145,24 @@ void find_blobs(camera_fb_t *fb, vector<blob_t> &blob_arr, uint8_t blob_threshol
     }
 
   }
-  /*
-  for (int y = 0; y < height; y++) {
 
-    Serial.print("[");
+  blob_map.erase(0);
 
-    for (int x = 0; x < width; x++) {
+  vector<blob_t> frame_blobs;
 
-      Serial.print(char (labels[y * width + x] + 64));
-
-    }
-
-    Serial.println("]");
-
-  }
-  */
-
-  blobs.erase(0);
-
-  for (auto & i : blobs) {
+  for (auto & i : blob_map) {
     if (i.second.size < MIN_BLOB_SIZE) continue;
     i.second.avg_brightness = i.second.total_brightness / i.second.size;
-    blob_arr.push_back(i.second);
+    frame_blobs.push_back(i.second);
   }
 
   struct {
-    bool operator()(const blob_t &a, const blob_t &b) const { return a.avg_brightness > b.avg_brightness; }
+    bool operator()(const blob_t &a, const blob_t &b) const { return a.avg_brightness < b.avg_brightness; }
   } blob_cmp;
 
-  sort(blob_arr.begin(), blob_arr.end(), blob_cmp);
+  sort(frame_blobs.begin(), frame_blobs.end(), blob_cmp);
+
+  return frame_blobs;
 
 }
+
