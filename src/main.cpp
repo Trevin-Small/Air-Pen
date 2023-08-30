@@ -11,7 +11,7 @@
 
 using namespace std;
 
-// Initialize the BLE device as a BLE peripheral
+// Initialize the ESP32-S3 as a BLE peripheral
 BlePeripheral BlePeriph("Scribe", "TKS");
 
 /*
@@ -20,7 +20,7 @@ BlePeripheral BlePeriph("Scribe", "TKS");
  * size, position, and intensity, moving in the same trend, and/or
  * flashing at certain frequencies.
  *
- * Used for recognizing the IR lighthouse amongst ambient IR noise.
+ * Used for distinguishing the IR lighthouse from ambient IR noise.
  */
 circular_buffer<vector<blob_t>> blob_buf(BLOB_BUF_SIZE);
 
@@ -44,7 +44,7 @@ void setup() {
   cam->set_raw_gma(cam, 0);
   cam->set_lenc(cam, 0);
 
-  delay(1000);
+  delay(500);
 
   // Enable bluetooth
   BlePeriph.begin();
@@ -52,23 +52,21 @@ void setup() {
 
 void loop() {
 
+  // If the device is not connected to a computer via Bluetooth
+  if (!BlePeriph.is_connected()) {
+    return;
+  }
+
   //acquire a fb
   camera_fb_t * fb = esp_camera_fb_get();
 
   // Find the blobs in the image frame and add them to the blob buffer
   blob_buf.push(find_blobs(fb, REF_BLOB_THRESHOLD));
 
-  // If the device is connected to a computer via Bluetooth
-  if (BlePeriph.is_connected()) {
-
-    // Calculate the mouse coords with blob buf and send them via BlePeriph
-    send_mouse_coords(BlePeriph, blob_buf, fb);
-
-  }
+  // Calculate the mouse coords with blob buf and send them via BlePeriph
+  send_mouse_coords(BlePeriph, blob_buf, fb);
 
   //return the fb buffer back to the driver for reuse
   esp_camera_fb_return(fb);
-
-  delay(10);
 
 }
