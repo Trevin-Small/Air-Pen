@@ -24,7 +24,7 @@ Some clever image processing and up-sampling allows for fast, accurate tracking 
 
 With Air Pen's companion IR lighthouse placed near your presentation screen, the Pen is able to track its location anywhere in the room, and therefore convert your movements into mouse movements!
 
-## Product Timeline
+## Project Timeline
 ### July 22nd - First Working Prototype
 - Built with an ESP32 Mini, an old Wiimote, a portable charger, a ruler and scotch tape!
 
