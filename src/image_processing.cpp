@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <vector>
 #include <unordered_map>
+#include <Arduino.h>
 
 using namespace std;
 
@@ -151,7 +152,7 @@ vector<blob_t> find_blobs(camera_fb_t *fb, uint8_t blob_threshold) {
   vector<blob_t> frame_blobs;
 
   for (auto & i : blob_map) {
-    if (i.second.size < MIN_BLOB_SIZE) continue;
+    if (i.second.size < REF_BLOB_MIN_SIZE || i.second.size > REF_BLOB_MAX_SIZE) continue;
     i.second.avg_brightness = i.second.total_brightness / i.second.size;
     frame_blobs.push_back(i.second);
   }
@@ -160,7 +161,7 @@ vector<blob_t> find_blobs(camera_fb_t *fb, uint8_t blob_threshold) {
     bool operator()(const blob_t &a, const blob_t &b) const { return a.avg_brightness < b.avg_brightness; }
   } blob_cmp;
 
-  sort(frame_blobs.begin(), frame_blobs.end(), blob_cmp);
+  std::sort(frame_blobs.begin(), frame_blobs.end(), blob_cmp);
 
   return frame_blobs;
 

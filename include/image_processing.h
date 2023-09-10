@@ -6,12 +6,12 @@
 
 #define MAX_BLOBS_PER_FRAME   8   // Maximum number of blobs to find in an image.
 #define BLOB_BUF_SIZE         8   // Number of blob arrays to keep in the buffer
-#define MIN_BLOB_SIZE         5   // Minimum number of pixels to form a blob
 
 #define REF_BLOB_THRESHOLD  220   // Threshold to categorize a pixel as white/black
-#define REF_BLOB_MIN_SIZE     2   // Min size the reference IR blob wil show up as
-#define REF_BLOB_MAX_SIZE    10   // Max size the reference IR blob wil show up as
+#define REF_BLOB_MIN_SIZE    10   // Min size the reference IR blob wil show up as
+#define REF_BLOB_MAX_SIZE   150   // Max size the reference IR blob wil show up as
 #define REF_BLOB_MAX_SPEED   10   // Max speed the ref IR blob can move in pixels/millisec
+
 
 using namespace std;
 

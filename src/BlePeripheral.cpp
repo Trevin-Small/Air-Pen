@@ -6,6 +6,14 @@
 
 using namespace std;
 
+int filter_motion(int m) {
+  if (m < MIN_MOTION_THRESHOLD || m > MAX_MOTION_THRESHOLD) {
+    return 0;
+  }
+
+  return m;
+}
+
 BlePeripheral::BlePeripheral(std::string name, std::string manufacturer_name) : Mouse(&Keyboard) {
   Keyboard.deviceName = name;
   Keyboard.deviceManufacturer = manufacturer_name;
@@ -27,7 +35,16 @@ pair<int, int> BlePeripheral::get_mouse_coords() {
 }
 
 void BlePeripheral::send_mouse_coords(pair<int, int> coords) {
-  Mouse.move(coords.first - mouse_coords.first, coords.second - mouse_coords.second);
+  int dx = coords.first - mouse_coords.first;
+  int dy = coords.second - mouse_coords.second;
+
+  //dx = filter_motion(dx);
+  //dy = filter_motion(dy);
+
+  mouse_coords.first += dx;
+  mouse_coords.second += dy;
+
+  Mouse.move(dx, dy);
 }
 
 void BlePeripheral::send_click(int button = 0) {

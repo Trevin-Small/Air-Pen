@@ -10,6 +10,9 @@
 #define SCREEN_WIDTH    1500
 #define SCREEN_HEIGHT   1000
 
+#define MIN_MOTION_THRESHOLD     0
+#define MAX_MOTION_THRESHOLD   400
+
 using namespace std;
 
 class BlePeripheral {
